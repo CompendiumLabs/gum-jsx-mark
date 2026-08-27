@@ -1,0 +1,39 @@
+{
+  "name": "@gum-jsx/mark",
+  "version": "0.1.0",
+  "description": "Markdown to terminal rendering with embedded gum.jsx figures and math",
+  "type": "module",
+  "author": "Douglas Hanley",
+  "license": "MIT",
+  "files": [
+    "src"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gum-jsx/core": "^1.6.4",
+    "@gum-jsx/math": "^0.1.0",
+    "@gum-jsx/node": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@gum-jsx/core": {
+      "optional": true
+    },
+    "@gum-jsx/math": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "marked": "^18.0.5"
+  },
+  "devDependencies": {
+    "@gum-jsx/core": "link:@gum-jsx/core",
+    "@gum-jsx/math": "link:@gum-jsx/math",
+    "@types/node": "^25.2.3",
+    "typescript": "^5.9.3"
+  }
+}
