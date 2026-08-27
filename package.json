@@ -17,7 +17,6 @@
   "peerDependencies": {
     "@gum-jsx/core": "^1.6.4",
     "@gum-jsx/math": "^0.1.0",
-    "@gum-jsx/node": "^0.1.0"
   },
   "peerDependenciesMeta": {
     "@gum-jsx/core": {

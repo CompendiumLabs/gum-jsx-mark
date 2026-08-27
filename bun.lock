@@ -10,19 +10,16 @@
       "devDependencies": {
         "@gum-jsx/core": "link:@gum-jsx/core",
         "@gum-jsx/math": "link:@gum-jsx/math",
-        "@gum-jsx/node": "link:@gum-jsx/node",
         "@types/node": "^25.2.3",
         "typescript": "^5.9.3",
       },
       "peerDependencies": {
         "@gum-jsx/core": "^1.6.4",
         "@gum-jsx/math": "^0.1.0",
-        "@gum-jsx/node": "^0.1.0",
       },
       "optionalPeers": [
         "@gum-jsx/core",
         "@gum-jsx/math",
-        "@gum-jsx/node",
       ],
     },
   },
@@ -30,8 +27,6 @@
     "@gum-jsx/core": ["@gum-jsx/core@link:@gum-jsx/core", { "bin": { "gum": "./scripts/gum.ts" } }],
 
     "@gum-jsx/math": ["@gum-jsx/math@link:@gum-jsx/math", { "bin": { "gum-tex": "./scripts/tex.ts" } }],
-
-    "@gum-jsx/node": ["@gum-jsx/node@link:@gum-jsx/node", {}],
 
     "@types/node": ["@types/node@25.9.5", "", { "dependencies": { "undici-types": ">=7.24.0 <7.24.7" } }, "sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg=="],
 
