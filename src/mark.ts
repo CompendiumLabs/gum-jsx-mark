@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import type { Tokens, RendererObject, TokenizerAndRendererExtension } from 'marked'
 
 import { rasterizeSvg, ansi, formatImage } from '@gum-jsx/node'
-import { evaluateGum, fitSize } from '@gum-jsx/core/eval'
+import { evaluateGum } from '@gum-jsx/core/eval'
 import { mathToElement } from '@gum-jsx/math'
 import type { Size, ThemeName } from '@gum-jsx/core/lib/types'
 
@@ -73,9 +73,11 @@ function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId
   const height = opts.height ?? (displayMode ? 75 : 40)
 
   try {
-    const elem = mathToElement(tex, { inline: !displayMode, theme })
-    const size = fitSize(elem.size, [ width, height ])
-    const png = rasterizeSvg(elem.svg(), { size })
+    // size the math box up front (Svg fits it by aspect) so the SVG rasterizes
+    // at its final resolution — rasterizing at the natural size and letting the
+    // canvas scale the bitmap up blurs the glyphs, badly for short display math
+    const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ] })
+    const png = rasterizeSvg(elem.svg())
     return formatImage(png, { imageId })
   } catch {
     return ansi(fallback, { fg: 'gray' })
