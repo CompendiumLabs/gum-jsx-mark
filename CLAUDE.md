@@ -7,7 +7,7 @@ for the gum blocks, `@gum-jsx/math` (`mathToElement`) for the math, `@gum-jsx/no
 rasterizing, `formatImage` and `ansi` — all linked locally while unpublished (`bun link` in each
 sibling, `link:` entries in `devDependencies`; the peers are marked optional so `bun install`
 does not look on npm). A pure library: the `gum-down` CLI that wraps it lives in the
-batteries-included `gum-jsx` package (`../gum-jsx/scripts/down.ts`).
+batteries-included `gum-jsx` package (`../gum-jsx/scripts/mark.ts`).
 
 ## Layout
 
