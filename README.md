@@ -24,10 +24,10 @@ The function $\sin(x)$ looks like this:
 ```
 ````
 
-Display it with `gum-down` (shipped by the batteries-included `gum-jsx` package) (code block options `width=`, `height=`, and `theme=` override the global settings):
+Display it with `gum-mark` (shipped by the batteries-included `gum-jsx` package) (code block options `width=`, `height=`, and `theme=` override the global settings):
 
 ```bash
-gum-down notes.md -t light -w 800
+gum-mark notes.md -t light -w 800
 ```
 
 | Option | Description | Default |

@@ -4,10 +4,11 @@ Markdown → terminal rendering for gum.jsx: `displayMarkdown` turns Markdown in
 text, showing fenced `gum` code blocks, `.png`/`.svg`/`.jsx` image links, and `$...$`/`$$...$$`
 math inline as kitty-protocol images. It sits on top of the other packages — `@gum-jsx/core/eval`
 for the gum blocks, `@gum-jsx/math` (`mathToElement`) for the math, `@gum-jsx/node` for
-rasterizing, `formatImage` and `ansi` — all linked locally while unpublished (`bun link` in each
-sibling, `link:` entries in `devDependencies`; the peers are marked optional so `bun install`
-does not look on npm). A pure library: the `gum-down` CLI that wraps it lives in the
-batteries-included `gum-jsx` package (`../gum-jsx/scripts/mark.ts`).
+rasterizing, `formatImage` and `ansi` — all three peer dependencies (`^1.7.0`, versioned in
+lockstep; peers so the host has a single core registry), duplicated in `devDependencies` for
+typechecking; in the `gum-org` bun workspace they resolve to the sibling checkouts. A pure
+library: the `gum-mark` CLI that wraps it lives in the batteries-included `gum-jsx` package
+(`../gum-jsx/scripts/mark.ts`).
 
 ## Layout
 
@@ -16,18 +17,18 @@ batteries-included `gum-jsx` package (`../gum-jsx/scripts/mark.ts`).
 
 ## Commands
 
-### Markdown CLI (`gum-down`)
+### Markdown CLI (`gum-mark`)
 
-`src/index.ts` (`displayMarkdown`) renders Markdown to ANSI terminal text with fenced `gum` blocks, `.png`/`.svg`/`.jsx` images, and `$...$`/`$$...$$` math shown as kitty images. The `gum-down` CLI in `gum-jsx` wraps it:
+`src/index.ts` (`displayMarkdown`) renders Markdown to ANSI terminal text with fenced `gum` blocks, `.png`/`.svg`/`.jsx` images, and `$...$`/`$$...$$` math shown as kitty images. The `gum-mark` CLI in `gum-jsx` wraps it:
 
 ```bash
 # Display a markdown file in a kitty-compatible terminal
-gum-down README.md -t light -w 800
+gum-mark README.md -t light -w 800
 ```
 
 ```bash
-bun tsc --noEmit   # typecheck (follows the links into the siblings' sources)
+bun tsc --noEmit   # typecheck (follows the workspace symlinks into the siblings' sources)
 ```
 
 There is no test suite of its own; check output by hand in a kitty terminal, e.g.
-`printf 'Hello $x^2$\n' | gum-down`.
+`printf 'Hello $x^2$\n' | gum-mark`.

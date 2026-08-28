@@ -1,37 +1,37 @@
 {
   "name": "@gum-jsx/mark",
-  "version": "0.1.0",
+  "version": "1.7.0",
   "description": "Markdown to terminal rendering with embedded gum.jsx figures and math",
   "type": "module",
   "author": "Douglas Hanley",
+  "homepage": "https://github.com/CompendiumLabs/gum-jsx-mark",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CompendiumLabs/gum-jsx-mark.git"
+  },
   "license": "MIT",
   "files": [
     "src"
   ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "bun tsc --noEmit"
   },
   "peerDependencies": {
-    "@gum-jsx/core": "^1.6.4",
-    "@gum-jsx/math": "^0.1.0",
-  },
-  "peerDependenciesMeta": {
-    "@gum-jsx/core": {
-      "optional": true
-    },
-    "@gum-jsx/math": {
-      "optional": true
-    }
+    "@gum-jsx/core": "^1.7.0",
+    "@gum-jsx/math": "^1.7.0",
+    "@gum-jsx/node": "^1.7.0"
   },
   "dependencies": {
     "marked": "^18.0.5"
   },
   "devDependencies": {
-    "@gum-jsx/core": "link:@gum-jsx/core",
-    "@gum-jsx/math": "link:@gum-jsx/math",
+    "@gum-jsx/core": "^1.7.0",
+    "@gum-jsx/math": "^1.7.0",
+    "@gum-jsx/node": "^1.7.0",
     "@types/node": "^25.2.3",
     "typescript": "^5.9.3"
   }
