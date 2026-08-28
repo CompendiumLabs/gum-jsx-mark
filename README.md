@@ -1,6 +1,6 @@
 # @gum-jsx/mark
 
-Markdown-to-terminal rendering for [gum.jsx](https://github.com/CompendiumLabs/gum.jsx). Renders Markdown to ANSI-styled text, with fenced `gum` code blocks, image links (`.png`, `.svg`, `.jsx`), and TeX math (`$...$` and `$$...$$`) displayed inline as kitty graphics. It needs a terminal that supports the kitty image protocol, such as `kitty` or `ghostty`.
+Markdown-to-terminal rendering for [gum.jsx](https://github.com/CompendiumLabs/gum-jsx). Renders Markdown to ANSI-styled text, with fenced `gum` code blocks, image links (`.png`, `.svg`, `.jsx`), and TeX math (`$...$` and `$$...$$`) displayed inline as kitty graphics. It needs a terminal that supports the kitty image protocol, such as `kitty` or `ghostty`.
 
 ## Installation
 
