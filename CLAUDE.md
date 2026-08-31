@@ -2,18 +2,20 @@
 
 Markdown → terminal rendering for gum.jsx: `displayMarkdown` turns Markdown into ANSI-styled
 text, showing fenced `gum` code blocks, `.png`/`.svg`/`.jsx` image links, and `$...$`/`$$...$$`
-math inline as kitty-protocol images. It sits on top of the other packages — `@gum-jsx/core/eval`
-for the gum blocks, `@gum-jsx/math` (`mathToElement`) for the math, `@gum-jsx/node` for
-rasterizing, `formatImage` and `ansi` — all three peer dependencies (`^1.7.0`, versioned in
-lockstep; peers so the host has a single core registry), duplicated in `devDependencies` for
-typechecking; in the `gum-org` bun workspace they resolve to the sibling checkouts. A pure
+math inline as kitty-protocol images. It sits on top of the other packages — a core `Env`
+(`env.evaluate`; the default Env unless the `env` option names another, and it must have the math
+plugin for `<Latex>` in gum blocks) for the gum blocks, `@gum-jsx/math` (`mathToElement`) for the
+math, `@gum-jsx/node` for rasterizing, `formatImage` and `ansi` — all three peer dependencies
+(`^1.7.0`, versioned in lockstep; peers so the host has a single core and default Env), duplicated
+in `devDependencies` for typechecking; in the `gum-org` bun workspace they resolve to the sibling
+checkouts. A pure
 library: the `gum-mark` CLI that wraps it lives in the batteries-included `gum-jsx` package
 (`../gum-jsx/scripts/mark.ts`).
 
 ## Layout
 
-- `src/index.ts` - `displayMarkdown(content, { width, height, theme })`: a `Marked` instance with the renderer and math extensions
-- `src/mark.ts` - The marked `RendererObject` (ANSI text styling, fenced `gum` blocks rendered through `evaluateGum` → `rasterizeSvg` → `formatImage`, images read from disk) and the `TokenizerAndRendererExtension`s for `$...$` and `$$...$$`. Code block options `width=`, `height=`, `theme=` override the globals
+- `src/index.ts` - `displayMarkdown(content, { width, height, theme, env })`: a `Marked` instance with the renderer and math extensions
+- `src/mark.ts` - The marked `RendererObject` (ANSI text styling, fenced `gum` blocks rendered through `env.evaluate` → `rasterizeSvg` → `formatImage`, images read from disk) and the `TokenizerAndRendererExtension`s for `$...$` and `$$...$$`. Code block options `width=`, `height=`, `theme=` override the globals
 
 ## Commands
 

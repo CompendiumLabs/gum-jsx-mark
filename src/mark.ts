@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import type { Tokens, RendererObject, TokenizerAndRendererExtension } from 'marked'
 
 import { rasterizeSvg, ansi, formatImage } from '@gum-jsx/node'
-import { evaluateGum } from '@gum-jsx/core/eval'
+import { resolveEnv, type Env } from '@gum-jsx/core/env'
 import { mathToElement } from '@gum-jsx/math'
 import type { Size, ThemeName } from '@gum-jsx/core/lib/types'
 
@@ -15,6 +15,7 @@ interface Options {
   height?: number     // max height in pixels for gum blocks, images, and math
   theme?: ThemeName   // theme for gum blocks and math
   imageId?: number    // kitty image id
+  env?: Env           // the Env gum blocks and math evaluate against (default: the default Env, which must have the math plugin for <Latex>)
 }
 
 interface MathToken extends Tokens.Generic {
@@ -53,21 +54,21 @@ function maxSize({ width, height }: Options): Size | undefined {
   return [ width ?? Infinity, height ?? Infinity ]
 }
 
-function displayGum(code: string, { theme = 'dark', width = 1000, height = 500, imageId }: Options = {}): string {
+function displayGum(code: string, { theme = 'dark', width = 1000, height = 500, imageId, env }: Options = {}): string {
   const size: Size = [ width, height ]
-  const elem = evaluateGum(code, { theme, size })
+  const elem = resolveEnv(env).evaluate(code, { theme, size })
   const svg = elem.svg()
-  const png = rasterizeSvg(svg)
+  const png = rasterizeSvg(svg, { env: elem.env })
   return formatImage(png, { imageId }) + '\n'
 }
 
-function displaySvg(svg: string, { imageId, ...opts }: Options = {}): string {
-  const png = rasterizeSvg(svg, { size: maxSize(opts) })
+function displaySvg(svg: string, { imageId, env, ...opts }: Options = {}): string {
+  const png = rasterizeSvg(svg, { size: maxSize(opts), env })
   return formatImage(png, { imageId })
 }
 
 // Render math scaled to fit the given box (defaults differ for display/inline)
-function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId, ...opts }: Options): string {
+function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId, env, ...opts }: Options): string {
   const fallback = displayMode ? `$$\n${tex}\n$$` : `$${tex}$`
   const width = opts.width ?? (displayMode ? 750 : 600)
   const height = opts.height ?? (displayMode ? 75 : 40)
@@ -76,8 +77,8 @@ function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId
     // size the math box up front (Svg fits it by aspect) so the SVG rasterizes
     // at its final resolution — rasterizing at the natural size and letting the
     // canvas scale the bitmap up blurs the glyphs, badly for short display math
-    const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ] })
-    const png = rasterizeSvg(elem.svg())
+    const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ], env })
+    const png = rasterizeSvg(elem.svg(), { env: elem.env })
     return formatImage(png, { imageId })
   } catch {
     return ansi(fallback, { fg: 'gray' })
