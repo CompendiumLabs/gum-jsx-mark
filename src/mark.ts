@@ -105,7 +105,7 @@ function displayGum(code: string, opts: Options = {}): string {
   const elem = resolveEnv(env).evaluate(code, { theme, size })
   const svg = elem.svg()
   const png = rasterizeSvg(svg, { env: elem.env })
-  return emitImage(png, opts) + '\n'
+  return emitImage(png, opts)
 }
 
 function displaySvg(svg: string, opts: Options = {}): string {
@@ -210,7 +210,7 @@ function createRenderer(globalOpts: Options = {}): RendererObject {
 
       if (isGumLang(baseLang)) {
         try {
-          return displayGum(text, opts)
+          return displayGum(text, opts) + '\n\n'
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err)
           return `[gum.jsx error: ${message}]\n\n`
