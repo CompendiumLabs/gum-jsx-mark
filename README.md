@@ -24,7 +24,7 @@ The function $\sin(x)$ looks like this:
 ```
 ````
 
-Display it with `gum-mark` (shipped by the batteries-included `gum-jsx` package) (code block options `width=`, `height=`, and `theme=` override the global settings):
+Display it with `gum-mark` (shipped by the batteries-included `gum-jsx` package). Code block options `width=`, `height=`, and `theme=` override the global settings, and image links take the same options in their alt text (`![height=300](figure.png)`); a PNG is shown as it is, scaled down by the terminal when it exceeds the box:
 
 ```bash
 gum-mark notes.md -t light -H 100
@@ -35,7 +35,8 @@ gum-mark notes.md -p            # page through less
 |--------|-------------|---------|
 | `file` | Markdown file to render | stdin |
 | `-t, --theme <theme>` | Theme: `light` or `dark` | dark |
-| `-H, --height <pixels>` | Max height for gum blocks and images; target height for display math | 500 (math: 75) |
+| `-I, --image-height <pixels>` | Max height for gum blocks and images | 500 |
+| `-H, --height <pixels>` | Target height for display math | 100 |
 | `-i, --inline-height <pixels>` | Target height for inline math (shown one row tall) | 48 |
 | `-p, --pager` | Page through `less`, with images as kitty Unicode placeholders | off |
 

@@ -8,7 +8,7 @@ There is no elementary antiderivative for $e^{-x^2}$, but a well-known *trick* g
 
 ```gum height=600
 const gauss = x => exp(-x*x)
-return <Plot aspect={2} margin={0.1} xlim={[-3, 3]} ylim={[0, 1.1]} xticks={range(-3, 4)} yticks={[0, 0.5, 1]} grid grid-stroke-dasharray={4} title="The Gaussian kernel">
+return <Plot aspect={2} margin={[0.2, 0.1]} xlim={[-3, 3]} ylim={[0, 1.25]} xticks={range(-3, 4)} yticks={[0, 0.25, 0.5, 0.75, 1, 1.25]} grid grid-stroke-dasharray={4} title="The Gaussian kernel">
   <SymFill fy1={gauss} fy2={0} xlim={[-3, 3]} fill={blue} opacity={0.3} stroke={none} />
   <SymLine fy={gauss} xlim={[-3, 3]} stroke={blue} stroke-width={2} />
 </Plot>

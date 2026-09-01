@@ -23,10 +23,12 @@ interface VirtualOptions {
 
 interface Options {
   width?: number        // max width in pixels for gum blocks and images (math sizes by height alone)
-  height?: number       // max height in pixels for gum blocks and images; target height for display math
+  imageHeight?: number  // max height in pixels for gum blocks and images (default 500; `height=` on a fence)
+  height?: number       // target height in pixels for display math
   inlineHeight?: number // target height in pixels for inline math (shown one row tall, so this is its render resolution)
   theme?: ThemeName   // theme for gum blocks and math
   imageId?: number    // kitty image id
+  cell?: Size         // the terminal's cell size in pixels, so PNGs (shown as they are, not rasterized to size) can be capped by asking the terminal to scale them to a cell grid
   env?: Env           // the Env gum blocks and math evaluate against (default: the default Env, which must have the math plugin for <Latex>)
   virtual?: VirtualOptions  // render images as Unicode placeholders for paging
 }
@@ -46,8 +48,10 @@ function parseOptions(str: string): Options {
     if (eq > 0) {
       const key = part.slice(0, eq)
       const value = part.slice(eq + 1)
-      if (key == 'height' || key == 'width') {
-        opts[key] = Number(value)
+      if (key == 'width') {
+        opts.width = Number(value)
+      } else if (key == 'height') {
+        opts.imageHeight = Number(value)
       } else if (key == 'theme' && (value == 'light' || value == 'dark')) {
         opts.theme = value
       }
@@ -61,10 +65,11 @@ function isGumLang(lang: string): boolean {
   return lang === 'gum' || lang === 'gum.jsx'
 }
 
-// Max pixel box from width/height options (either may be omitted)
-function maxSize({ width, height }: Options): Size | undefined {
-  if (width == null && height == null) return undefined
-  return [ width ?? Infinity, height ?? Infinity ]
+const DEFAULT_IMAGE_HEIGHT = 500
+
+// Max pixel box for gum blocks and images (width may be omitted)
+function maxSize({ width, imageHeight = DEFAULT_IMAGE_HEIGHT }: Options): Size {
+  return [ width ?? Infinity, imageHeight ]
 }
 
 // Emit an image for the terminal. Normally a kitty escape placement; inline images go
@@ -73,19 +78,29 @@ function maxSize({ width, height }: Options): Size | undefined {
 // 2x-ish render to the cell height, keeping it crisp. In virtual (pager) mode the image
 // is transmitted as a virtual placement and a placeholder cell grid is returned instead,
 // sized to the natural pixel dimensions (one row for inline), capped at the terminal width.
-function emitImage(png: Buffer, { imageId, virtual }: Options, inline = false): string {
-  if (!virtual) {
-    return formatImage(png, { imageId, rows: inline ? 1 : undefined })
-  }
+// `max` is a pixel box for an image not rasterized to size (a PNG file): the terminal is
+// asked to scale it down, which the protocol expresses in cells, so it needs the cell size
+// — the placement grid in pager mode, or `r=`/`c=` on the escape (only the binding one,
+// the other follows from the image's aspect).
+function emitImage(png: Buffer, { imageId, cell, virtual }: Options, { inline = false, max }: { inline?: boolean, max?: Size } = {}): string {
   const [ pngW, pngH ] = pngSize(png)
+  const scale = max != null ? Math.min(1, max[0] / pngW, max[1] / pngH) : 1
+  if (!virtual) {
+    if (inline) return formatImage(png, { imageId, rows: 1 })
+    if (scale == 1 || cell == null) return formatImage(png, { imageId })
+    const [ cellW, cellH ] = cell
+    return max![1] / pngH <= max![0] / pngW
+      ? formatImage(png, { imageId, rows: Math.max(1, Math.round(pngH * scale / cellH)) })
+      : formatImage(png, { imageId, columns: Math.max(1, Math.round(pngW * scale / cellW)) })
+  }
   const [ cellW, cellH ] = virtual.cell
   let rows: number, cols: number
   if (inline) {
     rows = 1
     cols = Math.max(1, Math.round((pngW / pngH) * (cellH / cellW)))
   } else {
-    rows = Math.max(1, Math.ceil(pngH / cellH))
-    cols = Math.max(1, Math.ceil(pngW / cellW))
+    rows = Math.max(1, Math.ceil(pngH * scale / cellH))
+    cols = Math.max(1, Math.ceil(pngW * scale / cellW))
   }
   if (virtual.columns != null && cols > virtual.columns) {
     rows = Math.max(1, Math.round(rows * virtual.columns / cols))
@@ -100,8 +115,8 @@ function emitImage(png: Buffer, { imageId, virtual }: Options, inline = false): 
 }
 
 function displayGum(code: string, opts: Options = {}): string {
-  const { theme = 'dark', width = 1000, height = 500, env } = opts
-  const size: Size = [ width, height ]
+  const { theme = 'dark', width = 1000, imageHeight = DEFAULT_IMAGE_HEIGHT, env } = opts
+  const size: Size = [ width, imageHeight ]
   const elem = resolveEnv(env).evaluate(code, { theme, size })
   const svg = elem.svg()
   const png = rasterizeSvg(svg, { env: elem.env })
@@ -129,7 +144,7 @@ function renderMath(tex: string, displayMode: boolean, opts: Options): string {
     // canvas scale the bitmap up blurs the glyphs, badly for short display math
     const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ Infinity, height ], env })
     const png = rasterizeSvg(elem.svg(), { env: elem.env })
-    return emitImage(png, opts, !displayMode)
+    return emitImage(png, opts, { inline: !displayMode })
   } catch {
     return ansi(fallback, { fg: 'gray' })
   }
@@ -266,7 +281,8 @@ function createRenderer(globalOpts: Options = {}): RendererObject {
       try {
         if (ext === 'png') {
           const png = readFileSync(href)
-          return emitImage(png, globalOpts)
+          const opts = { ...globalOpts, ...parseOptions(text ?? '') }
+          return emitImage(png, opts, { max: maxSize(opts) })
         } else if (ext == 'svg') {
           const svg = readFileSync(href, 'utf8')
           const opts = { ...globalOpts, ...parseOptions(text ?? '') }
