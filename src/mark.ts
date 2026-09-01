@@ -91,9 +91,12 @@ function emitImage(png: Buffer, { imageId, virtual }: Options, inline = false): 
     rows = Math.max(1, Math.round(rows * virtual.columns / cols))
     cols = virtual.columns
   }
+  // an explicit placement id, so re-sending an image id (every run reuses 1, 2, ...)
+  // replaces its placement instead of adding another with this run's grid alongside
+  // the old — ghostty keeps those, and could draw the cells with a stale grid
   const id = virtual.nextId = (virtual.nextId ?? 0) + 1
-  virtual.transmit(formatImage(png, { imageId: id, virtual: true, rows, columns: cols }))
-  return formatPlaceholder(id, rows, cols)
+  virtual.transmit(formatImage(png, { imageId: id, placementId: 1, virtual: true, rows, columns: cols }))
+  return formatPlaceholder(id, rows, cols, 1)
 }
 
 function displayGum(code: string, opts: Options = {}): string {
@@ -118,7 +121,7 @@ function displaySvg(svg: string, opts: Options = {}): string {
 function renderMath(tex: string, displayMode: boolean, opts: Options): string {
   const { theme = 'dark', env } = opts
   const fallback = displayMode ? `$$\n${tex}\n$$` : `$${tex}$`
-  const height = displayMode ? (opts.height ?? 75) : (opts.inlineHeight ?? 48)
+  const height = displayMode ? (opts.height ?? 100) : (opts.inlineHeight ?? 48)
 
   try {
     // size the math box up front (Svg fits it by aspect) so the SVG rasterizes
