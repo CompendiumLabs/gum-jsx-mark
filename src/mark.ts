@@ -79,7 +79,11 @@ function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId
     // canvas scale the bitmap up blurs the glyphs, badly for short display math
     const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ], env })
     const png = rasterizeSvg(elem.svg(), { env: elem.env })
-    return formatImage(png, { imageId })
+    // inline math is placed over a single terminal row (r=1, width from aspect) so the
+    // cursor lands to its right and text flows on, instead of dropping to the image's
+    // last row; kitty downscales the 2x-ish render to the cell height, keeping it crisp
+    const rows = displayMode ? undefined : 1
+    return formatImage(png, { imageId, rows })
   } catch {
     return ansi(fallback, { fg: 'gray' })
   }
