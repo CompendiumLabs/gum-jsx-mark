@@ -7,7 +7,7 @@
 import { Marked } from 'marked'
 
 import { createRenderer, createMathExtensions } from './mark'
-import type { Options as MarkdownArgs } from './mark'
+import type { Options as MarkdownArgs, VirtualOptions } from './mark'
 
 function displayMarkdown(content: string, args: MarkdownArgs = {}): string {
   const marked = new Marked({
@@ -22,4 +22,4 @@ function displayMarkdown(content: string, args: MarkdownArgs = {}): string {
 //
 
 export { displayMarkdown }
-export type { MarkdownArgs }
+export type { MarkdownArgs, VirtualOptions }

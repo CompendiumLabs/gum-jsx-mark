@@ -3,12 +3,23 @@
 import { readFileSync } from 'fs'
 import type { Tokens, RendererObject, TokenizerAndRendererExtension } from 'marked'
 
-import { rasterizeSvg, ansi, formatImage } from '@gum-jsx/node'
+import { rasterizeSvg, ansi, formatImage, formatPlaceholder, pngSize } from '@gum-jsx/node'
 import { resolveEnv, type Env } from '@gum-jsx/core/env'
 import { mathToElement } from '@gum-jsx/math'
 import type { Size, ThemeName } from '@gum-jsx/core/lib/types'
 
 const HEADING_COLORS = ['magenta', 'blue', 'green', 'red', 'cyan', 'yellow']
+
+// Placeholder (pager) mode: images become kitty virtual placements referenced by Unicode
+// placeholder cells in the text, which survive being redrawn by a pager like `less -R`.
+// The transmission escapes go through `transmit` so the caller can send them straight to
+// the tty instead of through the pager (which would mangle them).
+interface VirtualOptions {
+  cell: Size                       // the terminal's cell size in pixels
+  columns?: number                 // terminal width in cells; wider images are scaled down to fit
+  transmit: (esc: string) => void  // receives each image's transmission escape sequence
+  nextId?: number                  // internal: the running kitty image id
+}
 
 interface Options {
   width?: number      // max width in pixels for gum blocks, images, and math
@@ -16,6 +27,7 @@ interface Options {
   theme?: ThemeName   // theme for gum blocks and math
   imageId?: number    // kitty image id
   env?: Env           // the Env gum blocks and math evaluate against (default: the default Env, which must have the math plugin for <Latex>)
+  virtual?: VirtualOptions  // render images as Unicode placeholders for paging
 }
 
 interface MathToken extends Tokens.Generic {
@@ -54,21 +66,52 @@ function maxSize({ width, height }: Options): Size | undefined {
   return [ width ?? Infinity, height ?? Infinity ]
 }
 
-function displayGum(code: string, { theme = 'dark', width = 1000, height = 500, imageId, env }: Options = {}): string {
+// Emit an image for the terminal. Normally a kitty escape placement; inline images go
+// over a single terminal row (r=1, width from aspect) so the cursor lands to their right
+// and text flows on, instead of dropping to the image's last row — kitty downscales the
+// 2x-ish render to the cell height, keeping it crisp. In virtual (pager) mode the image
+// is transmitted as a virtual placement and a placeholder cell grid is returned instead,
+// sized to the natural pixel dimensions (one row for inline), capped at the terminal width.
+function emitImage(png: Buffer, { imageId, virtual }: Options, inline = false): string {
+  if (!virtual) {
+    return formatImage(png, { imageId, rows: inline ? 1 : undefined })
+  }
+  const [ pngW, pngH ] = pngSize(png)
+  const [ cellW, cellH ] = virtual.cell
+  let rows: number, cols: number
+  if (inline) {
+    rows = 1
+    cols = Math.max(1, Math.round((pngW / pngH) * (cellH / cellW)))
+  } else {
+    rows = Math.max(1, Math.ceil(pngH / cellH))
+    cols = Math.max(1, Math.ceil(pngW / cellW))
+  }
+  if (virtual.columns != null && cols > virtual.columns) {
+    rows = Math.max(1, Math.round(rows * virtual.columns / cols))
+    cols = virtual.columns
+  }
+  const id = virtual.nextId = (virtual.nextId ?? 0) + 1
+  virtual.transmit(formatImage(png, { imageId: id, virtual: true, rows, columns: cols }))
+  return formatPlaceholder(id, rows, cols)
+}
+
+function displayGum(code: string, opts: Options = {}): string {
+  const { theme = 'dark', width = 1000, height = 500, env } = opts
   const size: Size = [ width, height ]
   const elem = resolveEnv(env).evaluate(code, { theme, size })
   const svg = elem.svg()
   const png = rasterizeSvg(svg, { env: elem.env })
-  return formatImage(png, { imageId }) + '\n'
+  return emitImage(png, opts) + '\n'
 }
 
-function displaySvg(svg: string, { imageId, env, ...opts }: Options = {}): string {
-  const png = rasterizeSvg(svg, { size: maxSize(opts), env })
-  return formatImage(png, { imageId })
+function displaySvg(svg: string, opts: Options = {}): string {
+  const png = rasterizeSvg(svg, { size: maxSize(opts), env: opts.env })
+  return emitImage(png, opts)
 }
 
 // Render math scaled to fit the given box (defaults differ for display/inline)
-function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId, env, ...opts }: Options): string {
+function renderMath(tex: string, displayMode: boolean, opts: Options): string {
+  const { theme = 'dark', env } = opts
   const fallback = displayMode ? `$$\n${tex}\n$$` : `$${tex}$`
   const width = opts.width ?? (displayMode ? 750 : 600)
   const height = opts.height ?? (displayMode ? 75 : 40)
@@ -79,11 +122,7 @@ function renderMath(tex: string, displayMode: boolean, { theme = 'dark', imageId
     // canvas scale the bitmap up blurs the glyphs, badly for short display math
     const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ], env })
     const png = rasterizeSvg(elem.svg(), { env: elem.env })
-    // inline math is placed over a single terminal row (r=1, width from aspect) so the
-    // cursor lands to its right and text flows on, instead of dropping to the image's
-    // last row; kitty downscales the 2x-ish render to the cell height, keeping it crisp
-    const rows = displayMode ? undefined : 1
-    return formatImage(png, { imageId, rows })
+    return emitImage(png, opts, !displayMode)
   } catch {
     return ansi(fallback, { fg: 'gray' })
   }
@@ -220,7 +259,7 @@ function createRenderer(globalOpts: Options = {}): RendererObject {
       try {
         if (ext === 'png') {
           const png = readFileSync(href)
-          return formatImage(png)
+          return emitImage(png, globalOpts)
         } else if (ext == 'svg') {
           const svg = readFileSync(href, 'utf8')
           const opts = { ...globalOpts, ...parseOptions(text ?? '') }
@@ -255,5 +294,5 @@ function createRenderer(globalOpts: Options = {}): RendererObject {
   }
 }
 
-export type { Options }
+export type { Options, VirtualOptions }
 export { parseOptions, createRenderer, createMathExtensions }
