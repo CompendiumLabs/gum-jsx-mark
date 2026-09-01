@@ -25,7 +25,7 @@ library: the `gum-mark` CLI that wraps it lives in the batteries-included `gum-j
 
 ```bash
 # Display a markdown file in a kitty-compatible terminal
-gum-mark README.md -t light -w 800
+gum-mark README.md -t light -H 100
 ```
 
 ```bash

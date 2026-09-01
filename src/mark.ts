@@ -22,8 +22,9 @@ interface VirtualOptions {
 }
 
 interface Options {
-  width?: number      // max width in pixels for gum blocks, images, and math
-  height?: number     // max height in pixels for gum blocks, images, and math
+  width?: number        // max width in pixels for gum blocks and images (math sizes by height alone)
+  height?: number       // max height in pixels for gum blocks and images; target height for display math
+  inlineHeight?: number // target height in pixels for inline math (shown one row tall, so this is its render resolution)
   theme?: ThemeName   // theme for gum blocks and math
   imageId?: number    // kitty image id
   env?: Env           // the Env gum blocks and math evaluate against (default: the default Env, which must have the math plugin for <Latex>)
@@ -109,18 +110,21 @@ function displaySvg(svg: string, opts: Options = {}): string {
   return emitImage(png, opts)
 }
 
-// Render math scaled to fit the given box (defaults differ for display/inline)
+// Render math at a target height: width follows from the equation's aspect ratio, so a
+// taller target actually scales the math up instead of hitting a width cap first. Display
+// math takes `height`; inline math has its own `inlineHeight`, since it is always shown one
+// terminal row tall and its target only sets how much resolution the terminal scales down
+// from (48px is ~2x a typical cell, still >1x on tall hi-dpi cells)
 function renderMath(tex: string, displayMode: boolean, opts: Options): string {
   const { theme = 'dark', env } = opts
   const fallback = displayMode ? `$$\n${tex}\n$$` : `$${tex}$`
-  const width = opts.width ?? (displayMode ? 750 : 600)
-  const height = opts.height ?? (displayMode ? 75 : 40)
+  const height = displayMode ? (opts.height ?? 75) : (opts.inlineHeight ?? 48)
 
   try {
     // size the math box up front (Svg fits it by aspect) so the SVG rasterizes
     // at its final resolution — rasterizing at the natural size and letting the
     // canvas scale the bitmap up blurs the glyphs, badly for short display math
-    const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ width, height ], env })
+    const elem = mathToElement(tex, { inline: !displayMode, theme, size: [ Infinity, height ], env })
     const png = rasterizeSvg(elem.svg(), { env: elem.env })
     return emitImage(png, opts, !displayMode)
   } catch {

@@ -27,15 +27,19 @@ The function $\sin(x)$ looks like this:
 Display it with `gum-mark` (shipped by the batteries-included `gum-jsx` package) (code block options `width=`, `height=`, and `theme=` override the global settings):
 
 ```bash
-gum-mark notes.md -t light -w 800
+gum-mark notes.md -t light -H 100
+gum-mark notes.md -p            # page through less
 ```
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `file` | Markdown file to render | stdin |
 | `-t, --theme <theme>` | Theme: `light` or `dark` | dark |
-| `-w, --width <pixels>` | Max width for gum blocks (and math) | 1000 (math: 750/600) |
-| `-H, --height <pixels>` | Max height for gum blocks (and math) | 500 (math: 75/40) |
+| `-H, --height <pixels>` | Max height for gum blocks and images; target height for display math | 500 (math: 75) |
+| `-i, --inline-height <pixels>` | Target height for inline math (shown one row tall) | 48 |
+| `-p, --pager` | Page through `less`, with images as kitty Unicode placeholders | off |
+
+Math is sized by height alone, its width following from the equation's aspect ratio.
 
 Or from JavaScript:
 
