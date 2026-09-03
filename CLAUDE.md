@@ -6,7 +6,7 @@ math inline as kitty-protocol images. It sits on top of the other packages — a
 (`env.evaluate`; the default Env unless the `env` option names another, and it must have the math
 plugin for `<Latex>` in gum blocks) for the gum blocks, `@gum-jsx/math` (`mathToElement`) for the
 math, `@gum-jsx/node` for rasterizing, `formatImage` and `ansi` — all three peer dependencies
-(`^1.8.0`, versioned in lockstep; peers so the host has a single core and default Env), duplicated
+(`^1.9.0`, versioned in lockstep; peers so the host has a single core and default Env), duplicated
 in `devDependencies` for typechecking; in the `gum-org` bun workspace they resolve to the sibling
 checkouts. A pure
 library: the `gum-mark` CLI that wraps it lives in the batteries-included `gum-jsx` package
