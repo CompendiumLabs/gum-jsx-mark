@@ -14,14 +14,20 @@
     "access": "public"
   },
   "files": [
-    "src"
+    "src",
+    "types"
   ],
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.ts"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
-    "typecheck": "bun tsc --noEmit"
+    "typecheck": "bun tsc --noEmit",
+    "types": "rm -rf types && bun tsc -p tsconfig.types.json",
+    "prepublishOnly": "bun run types"
   },
   "peerDependencies": {
     "@gum-jsx/core": "^1.8.0",
