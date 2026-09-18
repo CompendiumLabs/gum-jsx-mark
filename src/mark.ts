@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import type { RendererObject, TokenizerAndRendererExtension, Tokens } from 'marked'
-import { Element, LayoutPass, Svg, available, evaluate, make_request, render_svg } from '@gum-jsx/core'
+import { available, evaluate, make_request, render_element } from '@gum-jsx/core'
 import type { Size, ThemeName } from '@gum-jsx/core'
 import { rasterize_svg } from '@gum-jsx/png'
 import { createMathFonts, mathToElement } from '@gum-jsx/math'
@@ -94,27 +94,24 @@ function emitImage(png: Buffer, { imageId, cell, virtual }: Options,
   return formatPlaceholder(id, rows, columns, 1)
 }
 
-function layout(element: Element, theme: ThemeName, request = make_request()) {
-  const viewport = element instanceof Svg ? element : new Svg({ children: element })
-  const root = new Svg(viewport.type, {
-    ...viewport.props,
-    theme: viewport.props.theme ?? theme,
-  })
-  const fonts = createMathFonts()
-  const pass = new LayoutPass({ fonts: { value: fonts, version: fonts.version } })
-  const fragment = pass.layout(root, request)
-  return { fragment, svg: render_svg(fragment) }
+// Sources that return a plain value print it as text: strings verbatim, the rest as JSON.
+function formatValue(value: unknown): string {
+  return typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? String(value)
 }
 
 function displayGum(code: string, options: Options = {}): string {
   const { theme = 'dark', width = 1000, imageHeight = DEFAULT_IMAGE_HEIGHT, scope = {} } = options
-  const element = evaluate(code, {
+  const value = evaluate(code, {
     name: 'markdown.gum.jsx',
     scope: { ...math, ...scope },
   })
-  const request = make_request({ width: available(width), height: available(imageHeight) })
-  const { fragment, svg } = layout(element, theme, request)
-  return emitImage(rasterize_svg(svg, { size: fragment.size }), options)
+  const result = render_element(value, {
+    request: make_request({ width: available(width), height: available(imageHeight) }),
+    defaults: { theme },
+    fonts: createMathFonts(),
+  })
+  if (result.kind === 'value') return ansi(formatValue(result.value), { fg: 'gray' })
+  return emitImage(rasterize_svg(result.svg, { size: result.size }), options)
 }
 
 function displaySvg(svg: string, options: Options = {}): string {
@@ -137,8 +134,8 @@ function renderMath(tex: string, displayMode: boolean, options: Options): string
   const height = displayMode ? (options.height ?? 100) : (options.inlineHeight ?? 48)
   try {
     const element = mathToElement(tex, { inline: !displayMode })
-    const { fragment, svg } = layout(element, theme)
-    const width = fragment.size.width * height / fragment.size.height
+    const { svg, size } = render_element(element, { defaults: { theme }, fonts: createMathFonts() })
+    const width = size.width * height / size.height
     const png = rasterize_svg(svg, { size: { width, height } })
     return emitImage(png, options, { inline: !displayMode })
   } catch {
