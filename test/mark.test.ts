@@ -21,7 +21,7 @@ test('renders Markdown structure as styled terminal text', () => {
 
 test('evaluates gum blocks with math and caller bindings in scope', () => {
   const output = displayMarkdown(`\`\`\`gum width=120 height=80
-<HStack><Square fill={accent} /><Latex text="x^2" /></HStack>
+<HStack><Square fill={accent} /><Latex>x^2</Latex></HStack>
 \`\`\``, { scope: { accent: 'tomato' } })
   expect(output).not.toContain('gum.jsx error')
   const size = pngSize(image(output))
