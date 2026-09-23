@@ -10,9 +10,9 @@ getting started and the package overview.
 ## Command line
 
 ```sh
-bun run gum-mark notes.md -t light -H 100
-bun run gum-mark notes.md -p
-printf 'Hello $x^2$\n' | bun run gum-mark
+gum-mark notes.md -t light -H 100
+gum-mark notes.md -p
+printf 'Hello $x^2$\n' | gum-mark
 ```
 
 The `gum-mark` executable belongs to `@gum-jsx/cli`. Omit the file or use `-` to
@@ -63,7 +63,7 @@ kitty image sequences. This is a native host library: figure rendering uses
 | `virtual` | Image transmission callback and cell geometry for placeholder output. |
 
 `queryCellSize()` and `readStdin()` are also exported. The CLI handles terminal
-queries and pager setup; run `bun run gum-mark --help` for its options and defaults.
+queries and pager setup; run `gum-mark --help` for its options and defaults.
 
 ## Development
 
