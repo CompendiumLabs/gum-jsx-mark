@@ -5,11 +5,9 @@ It renders ANSI-styled text with fenced `gum` code blocks, local PNG/SVG/JSX
 images, and TeX math displayed through the kitty graphics protocol.
 
 See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
-workspace setup and the package overview.
+getting started and the package overview.
 
 ## Command line
-
-Install dependencies with `bun install` at the workspace root, then run:
 
 ```sh
 bun run gum-mark notes.md -t light -H 100
@@ -65,10 +63,8 @@ kitty image sequences. This is a native host library: figure rendering uses
 | `virtual` | Image transmission callback and cell geometry for placeholder output. |
 
 `queryCellSize()` and `readStdin()` are also exported. The CLI handles terminal
-queries and pager setup; run `bun run gum-mark --help` from the workspace for its
-options and defaults.
+queries and pager setup; run `bun run gum-mark --help` for its options and defaults.
 
 ## Development
 
-After workspace installation, run `bun run test` and `bun run typecheck` from
-this package directory.
+Run `bun run test` and `bun run typecheck` from this package directory.
