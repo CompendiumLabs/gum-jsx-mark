@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import type { RendererObject, TokenizerAndRendererExtension, Tokens } from 'marked'
-import { available, evaluate, make_request, render_element } from '@gum-jsx/core'
+import { available, Evaluator, make_request, render_element } from '@gum-jsx/core'
 import type { Size, ThemeName } from '@gum-jsx/core'
 import { rasterize_svg } from '@gum-jsx/png'
 import { createMathFonts, mathToElement } from '@gum-jsx/math'
@@ -9,6 +9,7 @@ import { ansi, formatImage, formatPlaceholder, pngSize } from './terminal'
 
 const HEADING_COLORS = ['magenta', 'blue', 'green', 'red', 'cyan', 'yellow'] as const
 const DEFAULT_IMAGE_HEIGHT = 500
+const evaluator = new Evaluator({ scope: math, name: 'markdown.gum.jsx' })
 
 interface VirtualOptions {
   cell: Size
@@ -101,10 +102,7 @@ function formatValue(value: unknown): string {
 
 function displayGum(code: string, options: Options = {}): string {
   const { theme = 'dark', width = 1000, imageHeight = DEFAULT_IMAGE_HEIGHT, scope = {} } = options
-  const value = evaluate(code, {
-    name: 'markdown.gum.jsx',
-    scope: { ...math, ...scope },
-  })
+  const value = evaluator.evaluate(code, { scope })
   const result = render_element(value, {
     request: make_request({ width: available(width), height: available(imageHeight) }),
     defaults: { theme },
