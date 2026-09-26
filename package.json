@@ -11,16 +11,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gum-jsx/core": "2.0.0-beta.1",
-    "@gum-jsx/math": "2.0.0-beta.1",
-    "@gum-jsx/png": "2.0.0-beta.1",
+    "@gum-jsx/core": "2.0.0-beta.2",
+    "@gum-jsx/math": "2.0.0-beta.2",
+    "@gum-jsx/png": "2.0.0-beta.2",
     "marked": "^18.0.11"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "^7"
   },
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CompendiumLabs/gum-jsx-mark.git"
