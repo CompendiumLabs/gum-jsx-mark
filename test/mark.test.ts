@@ -29,6 +29,22 @@ test('evaluates gum blocks with math and caller bindings in scope', () => {
   expect(size.height).toBeLessThanOrEqual(80)
 })
 
+test('Markdown gum blocks retain named positions and projected samples', () => {
+  const source = `\`\`\`gum width=120 height=80
+    const position = {theta: 0, r: 1}
+    return <Graph xlim={[-2, 2]} ylim={[-2, 2]} projection={({theta, r}) => ({x: r * cos(theta), y: r * sin(theta)})}>
+      <Rect {...{pos: position}} width={px(4)} height={px(6)} />
+      <SymLine f={theta => ({theta, r: 1})} tvals={[0, 1]} />
+    </Graph>
+\`\`\``
+  const cartesian = source.replace('const position = {theta: 0, r: 1}', 'const position = [1, 0]')
+    .replace(' projection={({theta, r}) => ({x: r * cos(theta), y: r * sin(theta)})}', '')
+    .replace('theta => ({theta, r: 1})', 'theta => [cos(theta), sin(theta)]')
+  const output = displayMarkdown(source)
+  expect(output).not.toContain('gum.jsx error')
+  expect(image(output)).toEqual(image(displayMarkdown(cartesian)))
+})
+
 test('renders inline and display math at their requested raster heights', () => {
   const inline = displayMarkdown('A $x^2$ B', { inlineHeight: 42 })
   expect(pngSize(image(inline)).height).toBe(42)
