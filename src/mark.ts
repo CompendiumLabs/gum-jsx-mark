@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import type { RendererObject, TokenizerAndRendererExtension, Tokens } from 'marked'
-import { available, Evaluator, make_request, make_fragment, place_fragment, layout_element, render_svg } from '@gum-jsx/core'
+import { available, Evaluator, make_request, make_fragment, place_fragment, layout_element } from '@gum-jsx/core'
 import type { Fragment, Size, ThemeName } from '@gum-jsx/core'
-import { render_png, has_live_text, rasterize_svg } from '@gum-jsx/png'
+import { render_png } from '@gum-jsx/png'
 import { createMathFonts, mathToElement } from '@gum-jsx/math'
 import * as math from '@gum-jsx/math'
 import { ansi, formatImage, formatPlaceholder, pngSize } from './terminal'
@@ -101,9 +101,7 @@ function formatValue(value: unknown): string {
 }
 
 function renderFragment(fragment: Fragment): Buffer {
-  return has_live_text(fragment)
-    ? rasterize_svg(render_svg(fragment), { size: fragment.size })
-    : Buffer.from(render_png(fragment))
+  return Buffer.from(render_png(fragment))
 }
 
 function displayGum(code: string, options: Options = {}): string {
@@ -116,20 +114,6 @@ function displayGum(code: string, options: Options = {}): string {
   })
   if (result.kind === 'value') return ansi(formatValue(result.value), { fg: 'gray' })
   return emitImage(renderFragment(result.fragment), options)
-}
-
-function displaySvg(svg: string, options: Options = {}): string {
-  let png = rasterize_svg(svg)
-  const natural = pngSize(png)
-  const max = maxSize(options)
-  const scale = Math.min(1, max.width / natural.width, max.height / natural.height)
-  if (scale < 1) {
-    png = rasterize_svg(svg, { size: {
-      width: natural.width * scale,
-      height: natural.height * scale,
-    } })
-  }
-  return emitImage(png, options)
 }
 
 function renderMath(tex: string, displayMode: boolean, options: Options): string {
@@ -252,7 +236,7 @@ function createRenderer(globalOptions: Options = {}): RendererObject {
         if (extension === 'png') {
           return emitImage(readFileSync(href), options, { max: maxSize(options) })
         }
-        if (extension === 'svg') return displaySvg(readFileSync(href, 'utf8'), options)
+        if (extension === 'svg') return ansi(`[SVG images are unsupported; use PNG or JSX: ${href}]`, { fg: 'gray' })
         if (extension === 'jsx') return displayGum(readFileSync(href, 'utf8'), options)
         return ansi(`[Unsupported image type: ${extension}]`, { fg: 'gray' })
       } catch {

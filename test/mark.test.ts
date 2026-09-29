@@ -19,6 +19,11 @@ test('renders Markdown structure as styled terminal text', () => {
   expect(output).toContain('https://example.com')
 })
 
+test('external SVG images and emoji figures explain unsupported inputs', () => {
+  expect(displayMarkdown('![diagram](figure.svg)')).toContain('SVG images are unsupported; use PNG or JSX')
+  expect(displayMarkdown('```gum\n<Text>😀</Text>\n```')).toContain('cannot draw live text')
+})
+
 test('evaluates gum blocks with math and caller bindings in scope', () => {
   const output = displayMarkdown(`\`\`\`gum width=120 height=80
 <HStack><Square fill={accent} /><Latex>x^2</Latex></HStack>

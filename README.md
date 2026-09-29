@@ -1,7 +1,7 @@
 # @gum-jsx/mark
 
 Markdown-to-terminal rendering for [gum.jsx](https://github.com/CompendiumLabs/gum-jsx).
-It renders ANSI-styled text with fenced `gum` code blocks, local PNG/SVG/JSX
+It renders ANSI-styled text with fenced `gum` code blocks, local PNG/JSX
 images, and TeX math displayed through the kitty graphics protocol.
 
 See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
@@ -49,9 +49,9 @@ process.stdout.write(displayMarkdown(markdown, { theme: 'light', width: 800 }))
 
 `displayMarkdown(content, options?)` returns a string containing ANSI text and
 kitty image sequences. Gum figures and math use `@gum-jsx/png` and tiny-skia
-WebAssembly without native addons or install scripts. Live text, emoji, and
-external SVG images require the optional `canvas` package, its native install
-script, and suitable host fonts. Local PNGs are sent directly to the terminal.
+WebAssembly without native addons or install scripts. Live text, emoji without
+outlines, and external SVG images are unsupported. Use PNG or JSX images.
+Local PNGs are sent directly to the terminal.
 
 | Option | Meaning |
 | --- | --- |
