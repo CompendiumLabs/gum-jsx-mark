@@ -52,6 +52,9 @@ test('renders inline and display math at their requested raster heights', () => 
 
   const display = displayMarkdown('$$x^2$$\n', { height: 90 })
   expect(pngSize(image(display)).height).toBe(90)
+  // These heights expose floating-point overshoot when deriving the ratio.
+  expect(pngSize(image(displayMarkdown('$x^2$', { inlineHeight: 7 }))).height).toBe(7)
+  expect(pngSize(image(displayMarkdown('$$\\int_0^1 x$$', { height: 123 }))).height).toBe(123)
 })
 
 test('pager mode transmits virtual images and returns Unicode placeholders', () => {

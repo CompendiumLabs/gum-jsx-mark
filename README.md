@@ -48,8 +48,10 @@ process.stdout.write(displayMarkdown(markdown, { theme: 'light', width: 800 }))
 ```
 
 `displayMarkdown(content, options?)` returns a string containing ANSI text and
-kitty image sequences. This is a native host library: figure rendering uses
-`@gum-jsx/png` and node-canvas.
+kitty image sequences. Gum figures and math use `@gum-jsx/png` and tiny-skia
+WebAssembly without native addons or install scripts. Live text, emoji, and
+external SVG images require the optional `canvas` package, its native install
+script, and suitable host fonts. Local PNGs are sent directly to the terminal.
 
 | Option | Meaning |
 | --- | --- |
