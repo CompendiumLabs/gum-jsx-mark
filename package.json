@@ -8,13 +8,15 @@
   "license": "MIT",
   "scripts": {
     "test": "bun test ./test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gum-mark": "bun src/cli.ts"
   },
   "dependencies": {
     "@gum-jsx/core": "2.0.0-beta.3",
     "@gum-jsx/math": "2.0.0-beta.3",
     "@gum-jsx/png": "2.0.0-beta.3",
-    "marked": "^18.0.11"
+    "marked": "^18.0.11",
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -40,5 +42,8 @@
     "src",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "bin": {
+    "gum-mark": "src/cli.ts"
+  }
 }

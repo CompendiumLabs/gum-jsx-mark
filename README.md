@@ -10,12 +10,14 @@ getting started and the package overview.
 ## Command line
 
 ```sh
+bun install -g @gum-jsx/mark@beta
+
 gum-mark notes.md -t light -H 100
 gum-mark notes.md -p
 printf 'Hello $x^2$\n' | gum-mark
 ```
 
-The `gum-mark` executable belongs to `@gum-jsx/cli`. Omit the file or use `-` to
+This package provides the `gum-mark` executable. Omit the file or use `-` to
 read stdin. The terminal must support the kitty graphics protocol; pager mode
 also needs Unicode placeholder support and `less -R`.
 
