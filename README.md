@@ -1,6 +1,6 @@
 # @gum-jsx/mark
 
-Markdown-to-terminal rendering for [gum.jsx](https://github.com/CompendiumLabs/gum-jsx).
+Markdown-to-terminal rendering for [Gum](https://github.com/CompendiumLabs/gum-jsx).
 It renders ANSI-styled text with fenced `gum` code blocks, local PNG/JSX
 images, and TeX math displayed through the kitty graphics protocol.
 

@@ -1,6 +1,6 @@
 {
   "name": "@gum-jsx/mark",
-  "description": "Markdown to terminal rendering with embedded gum.jsx figures and math.",
+  "description": "Markdown to terminal rendering with embedded Gum figures and math.",
   "type": "module",
   "module": "src/index.ts",
   "types": "src/index.ts",

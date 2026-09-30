@@ -192,7 +192,7 @@ function createRenderer(globalOptions: Options = {}): RendererObject {
         try { return displayGum(text, options) + '\n\n' }
         catch (error) {
           const message = error instanceof Error ? error.message : String(error)
-          return `[gum.jsx error: ${message}]\n\n`
+          return `[Gum error: ${message}]\n\n`
         }
       }
       return `\`\`\`${ansi(baseLanguage, { fg: 'blue' })}\n${ansi(text, { fg: 'gray' })}\n\`\`\`\n\n`

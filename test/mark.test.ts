@@ -28,7 +28,7 @@ test('evaluates gum blocks with math and caller bindings in scope', () => {
   const output = displayMarkdown(`\`\`\`gum width=120 height=80
 <HStack><Square fill={accent} /><Latex>x^2</Latex></HStack>
 \`\`\``, { scope: { accent: 'tomato' } })
-  expect(output).not.toContain('gum.jsx error')
+  expect(output).not.toContain('Gum error')
   const size = pngSize(image(output))
   expect(size.width).toBeLessThanOrEqual(120)
   expect(size.height).toBeLessThanOrEqual(80)
@@ -46,7 +46,7 @@ test('Markdown gum blocks retain named positions and projected samples', () => {
     .replace(' projection={({theta, r}) => ({x: r * cos(theta), y: r * sin(theta)})}', '')
     .replace('theta => ({theta, r: 1})', 'theta => [cos(theta), sin(theta)]')
   const output = displayMarkdown(source)
-  expect(output).not.toContain('gum.jsx error')
+  expect(output).not.toContain('Gum error')
   expect(image(output)).toEqual(image(displayMarkdown(cartesian)))
 })
 

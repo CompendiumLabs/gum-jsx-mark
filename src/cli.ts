@@ -55,9 +55,9 @@ function displayPaged(content: string, options: MarkdownArgs): void {
 const program = new Command()
   .name('gum-mark')
   .version(version)
-  .description('Render Markdown with embedded gum.jsx figures and TeX math in a kitty-compatible terminal.')
+  .description('Render Markdown with embedded Gum figures and TeX math in a kitty-compatible terminal.')
   .argument('[file]', 'Markdown file (omit or use - for stdin)')
-  .addOption(new Option('-t, --theme <theme>', 'Theme for gum.jsx and math')
+  .addOption(new Option('-t, --theme <theme>', 'Theme for Gum and math')
     .choices(['light', 'dark']).default('dark'))
   .option('-W, --width <pixels>', 'Maximum width for gum blocks and images',
     value => positiveNumber(value, 'width'))
