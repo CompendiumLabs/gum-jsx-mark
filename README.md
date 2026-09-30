@@ -10,7 +10,7 @@ getting started and the package overview.
 ## Command line
 
 ```sh
-bun install -g @gum-jsx/mark@beta
+bun install -g @gum-jsx/mark
 
 gum-mark notes.md -t light -H 100
 gum-mark notes.md -p
