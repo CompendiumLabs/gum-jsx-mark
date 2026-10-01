@@ -10,14 +10,16 @@ getting started and the package overview.
 ## Command line
 
 ```sh
-bun install -g @gum-jsx/mark
+npm install -g @gum-jsx/mark
 
 gum-mark notes.md -t light -H 100
 gum-mark notes.md -p
 printf 'Hello $x^2$\n' | gum-mark
 ```
 
-This package provides the `gum-mark` executable. Omit the file or use `-` to
+The bundled `gum-mark` executable (also available as `gumd`) runs under Node.js 24+ or Bun 1.4.2+.
+It includes the Markdown parser, Gum renderer, fonts, and PNG WebAssembly.
+The package retains its source library exports and their dependencies. Omit the file or use `-` to
 read stdin. The terminal must support the kitty graphics protocol; pager mode
 also needs Unicode placeholder support and `less -R`.
 
@@ -41,6 +43,8 @@ Local image paths resolve from the process's working directory. Gum fences and
 JSX images execute JavaScript through the evaluator; render trusted documents.
 
 ## Library usage
+
+The source library API requires Bun or a compatible TypeScript bundler.
 
 ```ts
 import { displayMarkdown } from '@gum-jsx/mark'
@@ -71,4 +75,15 @@ queries and pager setup; run `gum-mark --help` for its options and defaults.
 
 ## Development
 
-Run `bun run test` and `bun run typecheck` from this package directory.
+From this package directory:
+
+```sh
+bun run build
+bun run test
+bun run typecheck
+```
+
+`build` writes the Node-compatible CLI and bundled assets/licenses to `dist/npm/`.
+`npm pack` and `npm publish` invoke it through `prepack`.
+
+Tests exercise the source CLI and the packed executable under Node and Bun.
