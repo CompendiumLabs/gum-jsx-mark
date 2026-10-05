@@ -1,46 +1,10 @@
 # @gum-jsx/mark
 
-Markdown-to-terminal rendering for [Gum](https://github.com/CompendiumLabs/gum-jsx).
+[Gum](https://github.com/CompendiumLabs/gum-jsx) — installation, quickstart, and user documentation.
+
+Markdown-to-terminal rendering for Gum.
 It renders ANSI-styled text with fenced `gum` code blocks, local PNG/JSX
 images, and TeX math displayed through the kitty graphics protocol.
-
-See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
-getting started and the package overview.
-
-## Command line
-
-```sh
-npm install -g @gum-jsx/mark
-
-gum-mark notes.md -t light -H 100
-gum-mark notes.md -p
-printf 'Hello $x^2$\n' | gum-mark
-```
-
-The bundled `gum-mark` executable (also available as `gumd`) runs under Node.js 24+ or Bun 1.4.2+.
-It includes the Markdown parser, Gum renderer, fonts, and PNG WebAssembly.
-The package retains its source library exports and their dependencies. Omit the file or use `-` to
-read stdin. The terminal must support the kitty graphics protocol; pager mode
-also needs Unicode placeholder support and `less -R`.
-
-Code block options `width=`, `height=`, and `theme=` override the command-wide
-settings. Image alt text accepts the same options, such as
-`![height=300](figure.png)`.
-
-````markdown
-# A short note
-
-Inline math: $e^{i\pi}+1=0$.
-
-```gum width=320 theme=light
-<Frame padding={em(1)}>
-  <Text>Hello, Gum</Text>
-</Frame>
-```
-````
-
-Local image paths resolve from the process's working directory. Gum fences and
-JSX images execute JavaScript through the evaluator; render trusted documents.
 
 ## Library usage
 
@@ -71,7 +35,42 @@ Local PNGs are sent directly to the terminal.
 | `virtual` | Image transmission callback and cell geometry for placeholder output. |
 
 `queryCellSize()` and `readStdin()` are also exported. The CLI handles terminal
-queries and pager setup; run `gum-mark --help` for its options and defaults.
+queries and pager setup; run `bun run gumd --help` for its options and defaults.
+
+## Command development
+
+From this package directory:
+
+```sh
+bun run gumd notes.md -t light -H 100
+bun run gumd notes.md -p
+printf 'Hello $x^2$\n' | bun run gumd
+```
+
+The bundled `gumd` executable runs under Node.js 24+ or Bun 1.4.2+.
+It includes the Markdown parser, Gum renderer, fonts, and PNG WebAssembly.
+The package retains its source library exports and their dependencies. Omit the file or use `-` to
+read stdin. The terminal must support the kitty graphics protocol; pager mode
+also needs Unicode placeholder support and `less -R`.
+
+Code block options `width=`, `height=`, and `theme=` override the command-wide
+settings. Image alt text accepts the same options, such as
+`![height=300](figure.png)`.
+
+````markdown
+# A short note
+
+Inline math: $e^{i\pi}+1=0$.
+
+```gum width=320 theme=light
+<Frame padding={em(1)}>
+  <Text>Hello, Gum</Text>
+</Frame>
+```
+````
+
+Local image paths resolve from the process's working directory. Gum fences and
+JSX images execute JavaScript through the evaluator; render trusted documents.
 
 ## Development
 
