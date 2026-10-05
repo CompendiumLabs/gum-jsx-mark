@@ -17,9 +17,9 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "@gum-jsx/core": "2.0.0",
-    "@gum-jsx/math": "2.0.0",
-    "@gum-jsx/png": "2.0.0",
+    "@gum-jsx/core": "2.1.0-beta.0",
+    "@gum-jsx/math": "2.1.0-beta.0",
+    "@gum-jsx/png": "2.1.0-beta.0",
     "marked": "^18.0.11",
     "commander": "^14.0.3"
   },
@@ -27,7 +27,7 @@
     "@types/bun": "latest",
     "typescript": "^7"
   },
-  "version": "2.0.0",
+  "version": "2.1.0-beta.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CompendiumLabs/gum-jsx-mark.git"
@@ -38,7 +38,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "latest"
+    "tag": "beta"
   },
   "engines": {
     "bun": ">=1.4.2",
