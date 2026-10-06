@@ -19,9 +19,14 @@ test('renders Markdown structure as styled terminal text', () => {
   expect(output).toContain('https://example.com')
 })
 
-test('external SVG images and emoji figures explain unsupported inputs', () => {
+test('external SVG images explain unsupported inputs', () => {
   expect(displayMarkdown('![diagram](figure.svg)')).toContain('SVG images are unsupported; use PNG or JSX')
-  expect(displayMarkdown('```gum\n<Text>😀</Text>\n```')).toContain('cannot draw live text')
+})
+
+test('emoji figures render successfully with live emoji skipped', () => {
+  const output = displayMarkdown('```gum\n<Text>Hello 😀</Text>\n```')
+  expect(output).not.toContain('Gum error')
+  expect(pngSize(image(output)).width).toBeGreaterThan(0)
 })
 
 test('evaluates gum blocks with math and caller bindings in scope', () => {
