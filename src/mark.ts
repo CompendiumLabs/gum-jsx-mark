@@ -122,7 +122,8 @@ function displayGum(code: string, options: Options = {}): string {
     fonts: createMathFonts(),
   })
   if (result.kind === 'value') return ansi(formatValue(result.value), { fg: 'gray' })
-  return emitImage(renderFragment(result.fragment), options)
+  const pages = result.kind === 'document' ? result.pages : [result.fragment]
+  return pages.map(page => emitImage(renderFragment(page), options)).join('\n\n')
 }
 
 function renderMath(tex: string, displayMode: boolean, options: Options): string {
