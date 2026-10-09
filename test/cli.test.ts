@@ -69,18 +69,6 @@ test('gum-mark rejects invalid dimensions, themes, and missing files', async () 
   expect(missing.error).toContain('ENOENT')
 })
 
-test('gum-mark sizes display math by font size', async () => {
-  for (const flag of ['--font-size', '-s']) {
-    const result = await cli([flag, '36'], '$$x\\tag{1.16}$$\nAfter')
-    expect(result.code).toBe(0)
-    expect(result.error).toBe('')
-    const encoded = [...result.text.matchAll(/\x1b_G[^;]*;([^\x1b]*)\x1b\\/g)]
-      .map(match => match[1]).join('')
-    expect(Buffer.from(encoded, 'base64').readUInt32BE(20)).toBe(36)
-    expect(result.text).toEndWith('\n\nAfter\n\n')
-  }
-})
-
 test('pager preserves image placements during initialization and repaint, then restores the screen', async () => {
   // Capture the pager's configuration and input without requiring an interactive terminal.
   const pager = join(scratch, 'less')

@@ -59,7 +59,8 @@ function displayPaged(content: string, options: MarkdownArgs): void {
   } finally {
     write_terminal(alternateOff)
   }
-  if (result.error) process.stdout.write(text)
+  // A completed pager takes precedence over a process-management error.
+  if (result.error && result.status !== 0) process.stdout.write(text)
 }
 
 const program = new Command()

@@ -15,7 +15,7 @@ test('packed CLI embeds Markdown, fonts, math, and rasterization', async () => {
       child.exited, new Response(child.stdout).text(), new Response(child.stderr).text(),
     ])
     expect(code, `${args.join(' ')}\n${out}\n${err}`).toBe(0)
-    return out
+    return out + err
   }
   try {
     await command(['npm', 'pack', '--pack-destination', scratch, '--cache', join(scratch, 'cache')])
@@ -35,9 +35,9 @@ test('packed CLI embeds Markdown, fonts, math, and rasterization', async () => {
     const node = process.env.GUM_NODE_RUNTIME ?? Bun.which('node')
     expect(node).not.toBeNull()
     for (const runtime of [node!, process.execPath]) {
-      await command([process.execPath, 'test', 'test/cli.test.ts'], {
+      console.log(await command([process.execPath, 'test', 'test/cli.test.ts'], {
         ...process.env, GUM_MARK_ENTRY: entry, GUM_MARK_RUNTIME: runtime,
-      })
+      }))
     }
   } finally {
     await rm(scratch, { recursive: true, force: true })
