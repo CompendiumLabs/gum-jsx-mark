@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import type { RendererObject, TokenizerAndRendererExtension, Tokens } from 'marked'
-import { available, Evaluator, make_request, make_fragment, place_fragment, layout_element } from '@gum-jsx/core'
+import { available, Evaluator, make_request, make_fragment, place_fragment, layout_element, px } from '@gum-jsx/core'
 import type { Fragment, Size, ThemeName } from '@gum-jsx/core'
 import { render_png } from '@gum-jsx/png'
 import { createMathFonts, mathToElement } from '@gum-jsx/math'
@@ -21,8 +21,8 @@ interface VirtualOptions {
 interface Options {
   width?: number
   imageHeight?: number
-  height?: number
-  inlineHeight?: number
+  fontSize?: number
+  inlineFontSize?: number
   theme?: ThemeName
   imageId?: number
   cell?: Size
@@ -31,7 +31,7 @@ interface Options {
 }
 
 interface MathToken extends Tokens.Generic {
-  type: 'math'
+  type: 'math' | 'display_math'
   raw: string
   text: string
   displayMode: boolean
@@ -65,7 +65,11 @@ function emitImage(png: Buffer, { imageId, cell, virtual }: Options,
   const scale = max === undefined ? 1
     : Math.min(1, max.width / natural.width, max.height / natural.height)
   if (!virtual) {
-    if (inline) return formatImage(png, { imageId, rows: 1 })
+    // Keep inline text on its row and advance only past the image's width.
+    if (inline) {
+      const columns = Math.max(1, Math.ceil(natural.width / (cell?.width ?? 10)))
+      return formatImage(png, { imageId, cursorMovement: false }) + `\x1b[${columns}C`
+    }
     if (scale === 1 || cell === undefined) return formatImage(png, { imageId })
     return max!.height / natural.height <= max!.width / natural.width
       ? formatImage(png, { imageId,
@@ -74,21 +78,26 @@ function emitImage(png: Buffer, { imageId, cell, virtual }: Options,
         columns: Math.max(1, Math.round(natural.width * scale / cell.width)) })
   }
 
-  let rows: number
-  let columns: number
-  if (inline) {
-    rows = 1
-    columns = Math.max(1, Math.round(natural.width / natural.height
-      * virtual.cell.height / virtual.cell.width))
-  } else {
-    rows = Math.max(1, Math.ceil(natural.height * scale / virtual.cell.height))
-    columns = Math.max(1, Math.ceil(natural.width * scale / virtual.cell.width))
-  }
+  let rows = Math.max(1, Math.ceil(natural.height * scale / virtual.cell.height))
+  let columns = Math.max(1, Math.ceil(natural.width * scale / virtual.cell.width))
   if (virtual.columns !== undefined && columns > virtual.columns) {
     rows = Math.max(1, Math.round(rows * virtual.columns / columns))
     columns = virtual.columns
   }
   const id = virtual.nextId = (virtual.nextId ?? 0) + 1
+  if (inline && rows > 1) {
+    // Anchor tall math to one invisible cell so less never inserts image rows.
+    // A relative placement follows that cell as the pager scrolls or redraws.
+    const anchor = renderFragment(make_fragment({ size: { width: 1, height: 1 } }))
+    virtual.transmit(formatImage(anchor, {
+      imageId: id, placementId: 1, virtual: true, rows: 1, columns: 1,
+    }))
+    const child_id = virtual.nextId = id + 1
+    virtual.transmit(formatImage(png, {
+      imageId: child_id, placementId: 1, rows, columns, parentId: id, parentPlacementId: 1,
+    }))
+    return formatPlaceholder(id, 1, 1, 1) + ' '.repeat(columns - 1)
+  }
   virtual.transmit(formatImage(png, {
     imageId: id, placementId: 1, virtual: true, rows, columns,
   }))
@@ -119,18 +128,20 @@ function displayGum(code: string, options: Options = {}): string {
 function renderMath(tex: string, displayMode: boolean, options: Options): string {
   const { theme = 'dark' } = options
   const fallback = displayMode ? `$$\n${tex}\n$$` : `$${tex}$`
-  const height = displayMode ? (options.height ?? 100) : (options.inlineHeight ?? 48)
+  const font_size = displayMode ? (options.fontSize ?? 64) : (options.inlineFontSize ?? 48)
   try {
-    const element = mathToElement(tex, { inline: !displayMode })
+    const element = mathToElement(tex, { inline: !displayMode, font_size: px(font_size) })
     const { fragment } = layout_element(element, { defaults: { theme }, fonts: createMathFonts() })
-    const scale = height / fragment.size.height
-    // Set the viewport height exactly: height / natural * natural can round up
-    // past the requested integer and add an unwanted raster row.
-    const png = renderFragment(make_fragment({
-      size: { width: fragment.size.width * scale, height },
-      children: [place_fragment(fragment, [0, 0], [scale, 0, 0, scale, 0, 0])],
-    }))
-    return emitImage(png, options, { inline: !displayMode })
+    // Pad pager images to whole cells so placement preserves the font scale.
+    const cell = options.virtual?.cell
+    const frame = cell === undefined ? fragment : make_fragment({
+      size: {
+        width: Math.ceil(fragment.size.width / cell.width) * cell.width,
+        height: Math.ceil(fragment.size.height / cell.height) * cell.height,
+      },
+      children: [place_fragment(fragment, [0, 0])],
+    })
+    return emitImage(renderFragment(frame), options, { inline: !displayMode })
   } catch {
     return ansi(fallback, { fg: 'gray' })
   }
@@ -139,7 +150,8 @@ function renderMath(tex: string, displayMode: boolean, options: Options): string
 function createMathExtensions(globalOptions: Options = {}): TokenizerAndRendererExtension[] {
   return [
     {
-      name: 'math',
+      // Marked keys renderers by name, independently of the tokenization level.
+      name: 'display_math',
       level: 'block',
       start(source: string): number | void {
         return source.match(/^ {0,3}\$\$/m)?.index
@@ -147,7 +159,8 @@ function createMathExtensions(globalOptions: Options = {}): TokenizerAndRenderer
       tokenizer(source: string): MathToken | undefined {
         const match = source.match(/^ {0,3}\$\$[ \t]*(?:\n([\s\S]+?)\n {0,3}\$\$[ \t]*|\s*([^\n]+?)\s*\$\$[ \t]*)(?:\n+|$)/)
         if (!match) return
-        return { type: 'math', raw: match[0], text: (match[1] ?? match[2]!).trim(), displayMode: true }
+        return { type: 'display_math', raw: match[0],
+          text: (match[1] ?? match[2]!).trim(), displayMode: true }
       },
       renderer(token: Tokens.Generic): string {
         const mathToken = token as MathToken
@@ -217,7 +230,7 @@ function createRenderer(globalOptions: Options = {}): RendererObject {
     },
 
     em({ tokens }: Tokens.Em): string {
-      return ansi(`_${this.parser.parseInline(tokens)}_`, { fg: 'gray', italic: true, bold: true })
+      return ansi(`_${this.parser.parseInline(tokens)}_`, { bold: true })
     },
 
     codespan({ text }: Tokens.Codespan): string {

@@ -6,6 +6,8 @@ type Color = keyof typeof ANSI_HI | number
 type KittyOptions = Readonly<{
   imageId?: number
   placementId?: number
+  parentId?: number
+  parentPlacementId?: number
   chunkSize?: number
   columns?: number
   rows?: number
@@ -31,18 +33,20 @@ function positiveInteger(value: number | undefined, name: string): void {
 }
 
 function formatImage(png: Buffer | string, options: KittyOptions = {}): string {
-  const { imageId, placementId, columns, rows, cursorMovement = true,
+  const { imageId, placementId, parentId, parentPlacementId, columns, rows, cursorMovement = true,
     virtual = false, chunkSize = 4096 } = options
   if (!Number.isInteger(chunkSize) || chunkSize < 4 || chunkSize > 4096 || chunkSize % 4 !== 0) {
     throw new RangeError('Kitty chunkSize must be a multiple of 4 between 4 and 4096')
   }
   positiveInteger(imageId, 'imageId')
   positiveInteger(placementId, 'placementId')
+  positiveInteger(parentId, 'parentId')
+  positiveInteger(parentPlacementId, 'parentPlacementId')
   positiveInteger(columns, 'columns')
   positiveInteger(rows, 'rows')
 
   const header = ['f=100', 'a=T', 'q=1']
-  const fields = { i: imageId, p: placementId, c: columns, r: rows }
+  const fields = { i: imageId, p: placementId, c: columns, r: rows, P: parentId, Q: parentPlacementId }
   for (const [key, value] of Object.entries(fields)) {
     if (value !== undefined) header.push(`${key}=${value}`)
   }

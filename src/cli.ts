@@ -17,6 +17,20 @@ function positiveNumber(value: string, name: string): number {
   return number
 }
 
+// Write image setup and screen changes to the same terminal used by less.
+function write_terminal(text: string): void {
+  let descriptor: number
+  try { descriptor = openSync('/dev/tty', 'w') }
+  catch { process.stdout.write(text); return }
+  try {
+    const data = Buffer.from(text)
+    let offset = 0
+    while (offset < data.length) offset += writeSync(descriptor, data, offset, data.length - offset)
+  } finally {
+    closeSync(descriptor)
+  }
+}
+
 function displayPaged(content: string, options: MarkdownArgs): void {
   const cell = queryCellSize() ?? { width: 10, height: 20 }
   const images: string[] = []
@@ -27,29 +41,25 @@ function displayPaged(content: string, options: MarkdownArgs): void {
   }
   const text = displayMarkdown(content, { ...options, virtual })
 
-  // Send virtual images to less's alternate screen through the controlling tty.
+  // Own the alternate screen so less cannot reset the uploaded placements.
   const alternateOn = '\x1b[?1049h'
   const alternateOff = '\x1b[?1049l'
-  const data = Buffer.from(alternateOn + images.join(''))
-  let descriptor: number | undefined
-  try {
-    descriptor = openSync('/dev/tty', 'w')
-    let offset = 0
-    while (offset < data.length) offset += writeSync(descriptor, data, offset, data.length - offset)
-  } catch {
-    process.stdout.write(data)
-  } finally {
-    if (descriptor !== undefined) closeSync(descriptor)
-  }
+  write_terminal(alternateOn + images.join(''))
 
   const definition = [process.env.LESSUTFCHARDEF, '10eeee:p'].filter(Boolean).join(',')
-  const environment = { ...process.env, LESSUTFCHARDEF: definition }
-  const result = spawnSync('less', ['-R'], {
-    input: text,
-    env: environment,
-    stdio: ['pipe', 'inherit', 'inherit'],
-  })
-  if (result.error) process.stdout.write(alternateOff + text)
+  // A full-screen erase also deletes relative images; erase text from home instead.
+  const environment = { ...process.env, LESSUTFCHARDEF: definition, LESS_TERMCAP_cl: '\x1b[H\x1b[J' }
+  let result
+  try {
+    result = spawnSync('less', ['-R', '-X'], {
+      input: text,
+      env: environment,
+      stdio: ['pipe', 'inherit', 'inherit'],
+    })
+  } finally {
+    write_terminal(alternateOff)
+  }
+  if (result.error) process.stdout.write(text)
 }
 
 const program = new Command()
@@ -63,12 +73,12 @@ const program = new Command()
     value => positiveNumber(value, 'width'))
   .option('-I, --image-height <pixels>', 'Maximum height for gum blocks and images',
     value => positiveNumber(value, 'image height'), 500)
-  .option('-H, --height <pixels>', 'Render height for display math',
-    value => positiveNumber(value, 'display math height'), 100)
-  .option('-i, --inline-height <pixels>', 'Render height for inline math',
-    value => positiveNumber(value, 'inline math height'), 48)
+  .option('-s, --font-size <pixels>', 'Font size for display math',
+    value => positiveNumber(value, 'display math font size'), 36)
+  .option('-i, --inline-font-size <pixels>', 'Font size for inline math',
+    value => positiveNumber(value, 'inline math font size'), 24)
   .option('-p, --pager', 'Page through less using kitty Unicode placeholders')
-  .addHelpText('after', '\nExamples:\n  gum-mark README.md\n  gum-mark notes.md -t light -H 120\n  gum-mark notes.md -p\n  printf \'Hello $x^2$\\n\' | gum-mark\n')
+  .addHelpText('after', '\nExamples:\n  gum-mark README.md\n  gum-mark notes.md -t light -s 64\n  gum-mark notes.md -p\n  printf \'Hello $x^2$\\n\' | gum-mark\n')
   .action(async (file: string | undefined, values: MarkOptions) => {
     const content = !file || file === '-' ? await readStdin() : readFileSync(file, 'utf8')
     const { pager, ...options } = values

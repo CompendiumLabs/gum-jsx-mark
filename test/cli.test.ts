@@ -1,5 +1,5 @@
 import { afterAll, expect, test } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { chmodSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,14 +8,14 @@ import { version } from '../package.json'
 const scratch = mkdtempSync(join(tmpdir(), 'gum-mark-cli-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 let invocation = 0
-async function cli(args: string[], input = '') {
+async function cli(args: string[], input = '', environment: Record<string, string> = {}) {
   const output = join(scratch, `stdout-${++invocation}`)
   const errors = join(scratch, `stderr-${invocation}`)
   const child = Bun.spawn([process.env.GUM_MARK_RUNTIME ?? process.execPath, '--no-addons',
     process.env.GUM_MARK_ENTRY ?? fileURLToPath(new URL('../src/cli.ts', import.meta.url)), ...args], {
     stdin: new Blob([input]), stdout: Bun.file(output), stderr: Bun.file(errors), cwd: scratch,
-    env: process.env.GUM_MARK_RUNTIME
-      ? { ...process.env, PATH: '' } : process.env,
+    detached: true,
+    env: { ...process.env, ...(process.env.GUM_MARK_RUNTIME ? { PATH: '' } : {}), ...environment },
   })
   const code = await child.exited
   const [text, error] = await Promise.all([Bun.file(output).text(), Bun.file(errors).text()])
@@ -28,17 +28,17 @@ test('gum-mark reports its package version and command options', async () => {
   }
   const help = await cli(['--help'])
   expect(help.code).toBe(0)
-  for (const option of ['--theme', '--width', '--image-height', '--height', '--inline-height', '--pager']) {
+  for (const option of ['--theme', '--width', '--image-height', '--font-size', '--inline-font-size', '--pager']) {
     expect(help.text).toContain(option)
   }
 })
 
 test('gum-mark reads files and stdin and renders embedded math', async () => {
-  const content = '# Notes\n\nA **bold** $x^2$ formula\n'
+  const content = '# Notes\n\nA **bold** $x$ formula\n'
   await Bun.write(join(scratch, 'notes.md'), content)
   const outputs = []
   for (const input of [[], ['-'], ['notes.md']]) {
-    const result = await cli([...input, '--inline-height', '42'], content)
+    const result = await cli([...input, '--inline-font-size', '42'], content)
     expect(result.code).toBe(0)
     expect(result.error).toBe('')
     expect(result.text).toContain('# Notes')
@@ -55,7 +55,7 @@ test('gum-mark reads files and stdin and renders embedded math', async () => {
 })
 
 test('gum-mark rejects invalid dimensions, themes, and missing files', async () => {
-  for (const option of ['--width', '--image-height', '--height', '--inline-height']) {
+  for (const option of ['--width', '--image-height', '--font-size', '--inline-font-size']) {
     const result = await cli([option, '0'])
     expect(result.code).toBe(1)
     expect(result.text).toBe('')
@@ -67,6 +67,48 @@ test('gum-mark rejects invalid dimensions, themes, and missing files', async () 
   const missing = await cli(['missing.md'])
   expect(missing.code).toBe(1)
   expect(missing.error).toContain('ENOENT')
+})
+
+test('gum-mark sizes display math by font size', async () => {
+  for (const flag of ['--font-size', '-s']) {
+    const result = await cli([flag, '36'], '$$x\\tag{1.16}$$\nAfter')
+    expect(result.code).toBe(0)
+    expect(result.error).toBe('')
+    const encoded = [...result.text.matchAll(/\x1b_G[^;]*;([^\x1b]*)\x1b\\/g)]
+      .map(match => match[1]).join('')
+    expect(Buffer.from(encoded, 'base64').readUInt32BE(20)).toBe(36)
+    expect(result.text).toEndWith('\n\nAfter\n\n')
+  }
+})
+
+test('pager preserves image placements during initialization and repaint, then restores the screen', async () => {
+  // Capture the pager's configuration and input without requiring an interactive terminal.
+  const pager = join(scratch, 'less')
+  await Bun.write(pager, `#!${process.env.GUM_MARK_RUNTIME ?? process.execPath}
+import { readSync } from 'node:fs'
+const buffer = Buffer.alloc(4096)
+const input = buffer.toString('utf8', 0, readSync(0, buffer, 0, buffer.length, null))
+console.log('PAGER=' + JSON.stringify({
+  args: process.argv.slice(2),
+  chars: process.env.LESSUTFCHARDEF,
+  clear: process.env.LESS_TERMCAP_cl,
+  input,
+}))
+`)
+  chmodSync(pager, 0o755)
+  const result = await cli(['-p', '-i', '48'], 'Before $\\dfrac{1}{2}$ after', {
+    PATH: scratch, LESSUTFCHARDEF: 'e000:p',
+  })
+  expect(result.code).toBe(0)
+  expect(result.error).toBe('')
+  expect(result.text).toStartWith('\x1b[?1049h\x1b_G')
+  expect(result.text).toEndWith('\x1b[?1049l')
+  const captured = JSON.parse(result.text.match(/PAGER=(.*)\n/)![1])
+  expect(captured.args).toEqual(['-R', '-X'])
+  expect(captured.chars).toBe('e000:p,10eeee:p')
+  expect(captured.clear).toBe('\x1b[H\x1b[J')
+  expect(captured.input.trim().split('\n')).toHaveLength(1)
+  expect(captured.input).toContain(' after')
 })
 
 
